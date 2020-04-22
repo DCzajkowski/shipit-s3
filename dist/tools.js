@@ -16,10 +16,12 @@ const fs_1 = require("fs");
 const recursive_readdir_1 = __importDefault(require("recursive-readdir"));
 const aws_sdk_1 = require("aws-sdk");
 const mime_types_1 = __importDefault(require("mime-types"));
+const github_1 = require("@actions/github");
 const AWS_S3_BUCKET = process.env.AWS_S3_BUCKET;
 const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID;
 const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
 const AWS_REGION = process.env.AWS_REGION;
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const credentials = new aws_sdk_1.Credentials({
     accessKeyId: AWS_ACCESS_KEY_ID,
     secretAccessKey: AWS_SECRET_ACCESS_KEY,
@@ -29,7 +31,8 @@ const s3Client = new aws_sdk_1.S3({
     region: AWS_REGION,
     credentials,
 });
-exports.prUpdatedAction = (source, destination) => __awaiter(void 0, void 0, void 0, function* () {
+exports.prUpdatedAction = (source, destination, customURL) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     console.log('>', 'prUpdatedAction', { source, destination });
     const filesPaths = yield recursive_readdir_1.default(source);
     console.log('>', 'filesPaths', filesPaths);
@@ -60,6 +63,18 @@ exports.prUpdatedAction = (source, destination) => __awaiter(void 0, void 0, voi
             .promise();
     }));
     yield Promise.all(uploadPromises);
+    if (github_1.context.payload.action === 'labeled') {
+        const { number } = (_a = github_1.context.payload) === null || _a === void 0 ? void 0 : _a.pull_request;
+        const { owner, repo } = github_1.context.repo;
+        const oktokit = new github_1.GitHub(GITHUB_TOKEN);
+        const deploymentURL = `${customURL}/${destination}/en/`;
+        yield oktokit.pulls.createReview({
+            owner,
+            repo,
+            pull_number: number,
+            body: `Your PR contents were deployed to ${deploymentURL} 🛳`,
+        });
+    }
 });
 exports.prClosedAction = (destination) => __awaiter(void 0, void 0, void 0, function* () {
     console.log('PR Closed Action');
