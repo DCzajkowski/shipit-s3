@@ -25,6 +25,7 @@ async function main() {
     case 'opened':
     case 'reopened':
     case 'synchronize':
+    case 'labeled':
       await prUpdatedAction(sourceDirectory, destinationDirectory)
       break
 
