@@ -1,0 +1,6 @@
+name: 'shipit-s3'
+description: 'GitHub Action for uploading websites to an s3 bucket'
+author: 'Dariusz Czajkowski <dare.czajkowski@gmail.com>'
+runs:
+  using: 'node12'
+  main: 'dist/index.js'
