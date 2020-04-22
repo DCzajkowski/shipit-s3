@@ -33,23 +33,13 @@ const s3Client = new aws_sdk_1.S3({
 });
 exports.prUpdatedAction = (source, destination, customURL) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
-    console.log('>', 'prUpdatedAction', { source, destination });
+    console.log('>', 'prUpdatedAction triggered with arguments', { source, destination });
     const filesPaths = yield recursive_readdir_1.default(source);
-    console.log('>', 'filesPaths', filesPaths);
     const uploadPromises = filesPaths.map((filePath) => __awaiter(void 0, void 0, void 0, function* () {
         const s3Key = `${destination}/${filePath.replace(source, '').replace(/^\/+/, '')}`;
         const fileBuffer = yield fs_1.promises.readFile(filePath);
         const mimeType = mime_types_1.default.lookup(filePath) || 'application/octet-stream';
-        console.log('>', 'uploadPromise', s3Key, mimeType);
-        console.log('>', 'details', {
-            Bucket: AWS_S3_BUCKET,
-            Key: s3Key,
-            Body: fileBuffer,
-            ACL: 'public-read',
-            ServerSideEncryption: 'AES256',
-            ContentType: mimeType,
-            CacheControl: 'max-age=0,no-cache,no-store,must-revalidate',
-        });
+        console.log('>', 'Uploading file', s3Key, 'with Content-Type', mimeType, 'to bucket', AWS_S3_BUCKET);
         yield s3Client
             .putObject({
             Bucket: AWS_S3_BUCKET,
@@ -63,11 +53,13 @@ exports.prUpdatedAction = (source, destination, customURL) => __awaiter(void 0, 
             .promise();
     }));
     yield Promise.all(uploadPromises);
+    console.log('>', 'Uploaded all files');
     if (github_1.context.payload.action === 'labeled') {
+        const deploymentURL = `${customURL}/${destination}/en/`;
+        console.log('>', 'The PR was labeled. Creating a review with link', deploymentURL);
         const { number } = (_a = github_1.context.payload) === null || _a === void 0 ? void 0 : _a.pull_request;
         const { owner, repo } = github_1.context.repo;
         const oktokit = new github_1.GitHub(GITHUB_TOKEN);
-        const deploymentURL = `${customURL}/${destination}/en/`;
         yield oktokit.pulls.createReview({
             owner,
             repo,
@@ -78,5 +70,28 @@ exports.prUpdatedAction = (source, destination, customURL) => __awaiter(void 0, 
     }
 });
 exports.prClosedAction = (destination) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log('PR Closed Action');
+    var _b;
+    console.log('>', 'prClosedAction triggered with arguments', { destination });
+    console.log('>', 'Getting all files connected to this PR from bucket', AWS_S3_BUCKET);
+    const objects = yield s3Client
+        .listObjects({
+        Bucket: AWS_S3_BUCKET,
+        Prefix: destination,
+    })
+        .promise();
+    const objectsKeys = (_b = objects.Contents) === null || _b === void 0 ? void 0 : _b.filter(({ Key }) => Key !== undefined).map(({ Key }) => ({ Key }));
+    if (objectsKeys === undefined || objectsKeys.length === 0) {
+        console.log('>', 'There are no files connected to this PR. Doing nothing...');
+        return;
+    }
+    console.log('>', 'Removing files', objectsKeys.map(({ Key }) => Key), 'from bucket', AWS_S3_BUCKET);
+    yield s3Client
+        .deleteObjects({
+        Bucket: AWS_S3_BUCKET,
+        Delete: {
+            Objects: objectsKeys,
+            Quiet: false,
+        },
+    })
+        .promise();
 });

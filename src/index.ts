@@ -13,9 +13,9 @@ async function main() {
     throw new Error('One or more required env variables not set.')
   }
 
-  const sourceDirectory = core.getInput('source-directory')
+  const sourceDirectory = core.getInput('source-directory', { required: false })
   const destinationDirectory = core.getInput('destination-directory')
-  const customURL = core.getInput('custom-url')
+  const customURL = core.getInput('custom-url', { required: false })
 
   if (context.eventName !== 'pull_request') {
     console.log('The event does not apply to a PR. Skiping...')
