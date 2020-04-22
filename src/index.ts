@@ -15,6 +15,7 @@ async function main() {
 
   const sourceDirectory = core.getInput('source-directory')
   const destinationDirectory = core.getInput('destination-directory')
+  const customURL = core.getInput('custom-url')
 
   if (context.eventName !== 'pull_request') {
     console.log('The event does not apply to a PR. Skiping...')
@@ -26,7 +27,7 @@ async function main() {
     case 'reopened':
     case 'synchronize':
     case 'labeled':
-      await prUpdatedAction(sourceDirectory, destinationDirectory)
+      await prUpdatedAction(sourceDirectory, destinationDirectory, customURL)
       break
 
     case 'closed':
