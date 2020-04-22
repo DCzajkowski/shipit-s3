@@ -72,6 +72,7 @@ exports.prUpdatedAction = (source, destination, customURL) => __awaiter(void 0, 
             owner,
             repo,
             pull_number: number,
+            event: 'COMMENT',
             body: `Your PR contents were deployed to ${deploymentURL} 🛳`,
         });
     }

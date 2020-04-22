@@ -73,6 +73,7 @@ export const prUpdatedAction = async (source: string, destination: string, custo
       owner,
       repo,
       pull_number: number,
+      event: 'COMMENT',
       body: `Your PR contents were deployed to ${deploymentURL} 🛳`,
     })
   }
