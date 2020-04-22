@@ -20,7 +20,6 @@ const AWS_S3_BUCKET = process.env.AWS_S3_BUCKET;
 const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID;
 const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
 const AWS_REGION = process.env.AWS_REGION;
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const credentials = new aws_sdk_1.Credentials({
     accessKeyId: AWS_ACCESS_KEY_ID,
     secretAccessKey: AWS_SECRET_ACCESS_KEY,
@@ -35,10 +34,19 @@ exports.prUpdatedAction = (source, destination) => __awaiter(void 0, void 0, voi
     const filesPaths = yield recursive_readdir_1.default(source);
     console.log('>', 'filesPaths', filesPaths);
     const uploadPromises = filesPaths.map((filePath) => __awaiter(void 0, void 0, void 0, function* () {
-        const s3Key = `${destination}/${filePath.replace(source, '')}`;
+        const s3Key = `${destination}/${filePath.replace(source, '').replace(/^\/+/, '')}`;
         const fileBuffer = yield fs_1.promises.readFile(filePath);
         const mimeType = mime_types_1.default.lookup(filePath) || 'application/octet-stream';
         console.log('>', 'uploadPromise', s3Key, mimeType);
+        console.log('>', 'details', {
+            Bucket: AWS_S3_BUCKET,
+            Key: s3Key,
+            Body: fileBuffer,
+            ACL: 'public-read',
+            ServerSideEncryption: 'AES256',
+            ContentType: mimeType,
+            CacheControl: 'max-age=0,no-cache,no-store,must-revalidate',
+        });
         yield s3Client
             .putObject({
             Bucket: AWS_S3_BUCKET,
