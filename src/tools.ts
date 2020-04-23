@@ -61,12 +61,11 @@ export const prUpdatedAction = async (source: string, destination: string, custo
 
     const oktokit = new GitHub(GITHUB_TOKEN)
 
-    await oktokit.pulls.createReview({
+    await oktokit.issues.createComment({
       owner,
       repo,
-      pull_number: number,
-      event: 'COMMENT',
-      body: `Your PR contents were deployed to ${deploymentURL} 🛳`,
+      issue_number: number,
+      body: `🛳 Your PR contents are now deployed to ${deploymentURL}`,
     })
   }
 }
