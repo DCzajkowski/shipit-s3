@@ -60,12 +60,11 @@ exports.prUpdatedAction = (source, destination, customURL) => __awaiter(void 0, 
         const { number } = (_a = github_1.context.payload) === null || _a === void 0 ? void 0 : _a.pull_request;
         const { owner, repo } = github_1.context.repo;
         const oktokit = new github_1.GitHub(GITHUB_TOKEN);
-        yield oktokit.pulls.createReview({
+        yield oktokit.issues.createComment({
             owner,
             repo,
-            pull_number: number,
-            event: 'COMMENT',
-            body: `Your PR contents were deployed to ${deploymentURL} 🛳`,
+            issue_number: number,
+            body: `🛳 Your PR contents are now deployed to ${deploymentURL}`,
         });
     }
 });
